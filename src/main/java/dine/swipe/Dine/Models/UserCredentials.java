@@ -13,6 +13,7 @@ import java.util.UUID;
 public class UserCredentials {
 
     @Id
+    @Column(nullable = false,unique = true)
     private String userName;
 
     @Column(nullable = false)

@@ -16,7 +16,6 @@ public class UserCredsDTO {
     private String userName;
 
     @NotBlank(message = "Password cannot be empty")
-    @Size(min = 6, message = "Password must be at least 6 characters long")
     private String password;
 
     public void setUserName(String userName){

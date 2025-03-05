@@ -25,9 +25,13 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<User> registerUser(@RequestBody User user){
-        User savedUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+    public ResponseEntity<Object> registerUser(@RequestBody User user){
+        try{
+            User savedUser = userService.createUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid request body");
+        }
     }
 
     @GetMapping("/{id}")
@@ -38,14 +42,13 @@ public class UserController {
     }
 
     @GetMapping("/getAll")
-    public ResponseEntity<List<User>> getAllUser(@PathVariable UUID id){
+    public ResponseEntity<List<User>> getAllUser(){
         List<User> userList = userService.getAllUser();
         return ResponseEntity.status(HttpStatus.OK).body(userList);
     }
 
     @PostMapping("/saveCredentials")
     public ResponseEntity<String> saveUserCredentials( @Valid @RequestBody UserCredsDTO userCredsDTO , BindingResult bindingResult){
-
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors()
                     .stream()
@@ -63,7 +66,7 @@ public class UserController {
         return ResponseEntity.ok("credentials saved");
     }
 
-    @GetMapping("/authenticate")
+    @PostMapping("/authenticate")
     public ResponseEntity<String> authenticateUser(@Valid @RequestBody UserCredsDTO userCredsDTO ,BindingResult bindingResult ){
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors()
@@ -71,14 +74,14 @@ public class UserController {
                     .map(error -> error.getDefaultMessage())
                     .collect(Collectors.joining(", "));
 
-            return ResponseEntity.badRequest().body("Bad request");
+            return ResponseEntity.badRequest().body(errorMessage);
         }
         String userName = userCredsDTO.getUserName();
 
         if(userService.findByUserName(userName).isPresent()){
             Optional<UserCredentials>userCreds = userService.getCreds(userName);
             if(userCreds.isPresent()){
-                String hashPwd = userCreds.map(UserCredentials::getHashedPassword).toString();
+                String hashPwd = userCreds.map(UserCredentials::getHashedPassword).orElse(null);
                 if(PasswordUtils.verifyPassword(userCredsDTO.getPassword(),hashPwd)){
                    return ResponseEntity.ok("Authentication sucessfull");
                 }else{
