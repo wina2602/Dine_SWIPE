@@ -1,14 +1,21 @@
 package dine.swipe.Dine.Controller;
 
+import dine.swipe.Dine.DTO.UserCredsDTO;
 import dine.swipe.Dine.Models.User;
+import dine.swipe.Dine.Models.UserCredentials;
 import dine.swipe.Dine.Service.UserService;
+import dine.swipe.Dine.Utils.PasswordUtils;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
@@ -36,4 +43,53 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body(userList);
     }
 
+    @PostMapping("/saveCredentials")
+    public ResponseEntity<String> saveUserCredentials( @Valid @RequestBody UserCredsDTO userCredsDTO , BindingResult bindingResult){
+
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors()
+                    .stream()
+                    .map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining(", "));
+
+            return ResponseEntity.badRequest().body(errorMessage);
+        }
+        String hashPwd = PasswordUtils.hashPassword(userCredsDTO.getPassword());
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setUserName(userCredsDTO.getUserName());
+        userCredentials.setHashedPassword(hashPwd);
+        userService.saveCreds(userCredentials);
+
+        return ResponseEntity.ok("credentials saved");
+    }
+
+    @GetMapping("/authenticate")
+    public ResponseEntity<String> authenticateUser(@Valid @RequestBody UserCredsDTO userCredsDTO ,BindingResult bindingResult ){
+        if (bindingResult.hasErrors()) {
+            String errorMessage = bindingResult.getAllErrors()
+                    .stream()
+                    .map(error -> error.getDefaultMessage())
+                    .collect(Collectors.joining(", "));
+
+            return ResponseEntity.badRequest().body("Bad request");
+        }
+        String userName = userCredsDTO.getUserName();
+
+        if(userService.findByUserName(userName).isPresent()){
+            Optional<UserCredentials>userCreds = userService.getCreds(userName);
+            if(userCreds.isPresent()){
+                String hashPwd = userCreds.map(UserCredentials::getHashedPassword).toString();
+                if(PasswordUtils.verifyPassword(userCredsDTO.getPassword(),hashPwd)){
+                   return ResponseEntity.ok("Authentication sucessfull");
+                }else{
+                   return  ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("invalid password");
+                }
+            }else{
+               return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User credentials not found");
+            }
+
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("username not found");
+    }
 }

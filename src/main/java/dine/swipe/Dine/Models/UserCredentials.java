@@ -13,12 +13,8 @@ import java.util.UUID;
 public class UserCredentials {
 
     @Id
-    @GeneratedValue
-    private UUID id;
+    private String userName;
 
     @Column(nullable = false)
-    private String salt;
-
-    @Column(nullable = false)
-    private String hashed_password;
+    private String hashedPassword;
 }

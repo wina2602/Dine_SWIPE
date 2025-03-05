@@ -1,6 +1,8 @@
 package dine.swipe.Dine.Service;
 
 import dine.swipe.Dine.Models.User;
+import dine.swipe.Dine.Models.UserCredentials;
+import dine.swipe.Dine.Repository.UserCredentialsRepository;
 import dine.swipe.Dine.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserCredentialsRepository userCredentialsRepository;
+
     public User createUser(User user){
         return userRepository.save(user);
     }
@@ -25,5 +30,17 @@ public class UserService {
 
     public List<User> getAllUser(){
         return userRepository.findAll();
+    }
+
+    public void saveCreds(UserCredentials userCredentials){
+         userCredentialsRepository.save(userCredentials);
+    }
+
+    public Optional<UserCredentials> getCreds(String userName){
+        return userCredentialsRepository.findByUserName(userName);
+    }
+
+    public  Optional<User> findByUserName(String userName){
+        return userRepository.findByUserName(userName);
     }
 }
