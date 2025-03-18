@@ -56,4 +56,11 @@ public class RoomsController {
         GroupPreference savedGroupPreference = roomService.saveGroupPreference(groupPreference);
         return  ResponseEntity.ok(savedGroupPreference);
     }
+
+    @GetMapping("/join/{id}")
+    public ResponseEntity<Object> joinRoom(@PathVariable UUID id){
+        roomService.joinRoom(id);
+
+        return ResponseEntity.ok().build();
+    }
 }

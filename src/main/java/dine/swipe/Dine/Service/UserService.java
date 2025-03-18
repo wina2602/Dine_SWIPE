@@ -5,6 +5,9 @@ import dine.swipe.Dine.Models.UserCredentials;
 import dine.swipe.Dine.Repository.UserCredentialsRepository;
 import dine.swipe.Dine.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,10 +23,12 @@ public class UserService {
     @Autowired
     private UserCredentialsRepository userCredentialsRepository;
 
+    @CachePut(value="users",key ="'username_' +#result.id" )
     public User createUser(User user){
         return userRepository.save(user);
     }
 
+    @Cacheable(value = "users" ,key = "'username_' + #id")
     public Optional<User> getUserById(UUID id){
         return userRepository.findById(id);
     }
